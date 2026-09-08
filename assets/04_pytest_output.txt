@@ -1,0 +1,35 @@
+============================= test session starts =============================
+platform win32 -- Python 3.10.11, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\dilli\AppData\Local\Programs\Python\Python310\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\dilli\OneDrive\Documents\IQOO
+plugins: anyio-4.12.1, dash-4.4.1, hydra-core-1.3.4, jaxtyping-0.3.7, asyncio-1.4.0
+asyncio: mode=strict, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 25 items
+
+backend/tests/test_classifier.py::TestClassifier::test_create_table_is_verifiable PASSED [  4%]
+backend/tests/test_classifier.py::TestClassifier::test_drop_table_is_verifiable PASSED [  8%]
+backend/tests/test_classifier.py::TestClassifier::test_add_column_is_verifiable PASSED [ 12%]
+backend/tests/test_classifier.py::TestClassifier::test_alter_column_type_is_not_verifiable PASSED [ 16%]
+backend/tests/test_classifier.py::TestClassifier::test_rename_table_not_verifiable PASSED [ 20%]
+backend/tests/test_classifier.py::TestClassifier::test_raw_dml_not_verifiable PASSED [ 24%]
+backend/tests/test_classifier.py::TestClassifier::test_create_index_verifiable PASSED [ 28%]
+backend/tests/test_classifier.py::TestClassifier::test_drop_index_verifiable PASSED [ 32%]
+backend/tests/test_classifier.py::TestClassifier::test_empty_sql_returns_empty PASSED [ 36%]
+backend/tests/test_classifier.py::TestClassifier::test_multiple_statements PASSED [ 40%]
+backend/tests/test_delta_engine.py::TestDeltaEngine::test_added_table PASSED [ 44%]
+backend/tests/test_delta_engine.py::TestDeltaEngine::test_dropped_table PASSED [ 48%]
+backend/tests/test_delta_engine.py::TestDeltaEngine::test_added_column PASSED [ 52%]
+backend/tests/test_delta_engine.py::TestDeltaEngine::test_dropped_column PASSED [ 56%]
+backend/tests/test_delta_engine.py::TestDeltaEngine::test_no_changes PASSED [ 60%]
+backend/tests/test_delta_engine.py::TestDeltaEngine::test_multiple_changes PASSED [ 64%]
+backend/tests/test_prisma_adapter.py::TestPrismaAdapter::test_adapter_is_instantiable PASSED [ 68%]
+backend/tests/test_prisma_adapter.py::TestPrismaAdapter::test_parse_webhook_github_failure PASSED [ 72%]
+backend/tests/test_verdict_engine.py::TestVerdictEngine::test_all_verifiable_applied PASSED [ 76%]
+backend/tests/test_verdict_engine.py::TestVerdictEngine::test_all_verifiable_rolled_back PASSED [ 80%]
+backend/tests/test_verdict_engine.py::TestVerdictEngine::test_non_verifiable_hard_stop PASSED [ 84%]
+backend/tests/test_verdict_engine.py::TestVerdictEngine::test_mixed_verifiable_hard_stop PASSED [ 88%]
+backend/tests/test_verdict_engine.py::TestVerdictEngine::test_empty_actions_rolled_back PASSED [ 92%]
+backend/tests/test_verdict_engine.py::TestVerdictEngine::test_drop_table_applied PASSED [ 96%]
+backend/tests/test_verdict_engine.py::TestVerdictEngine::test_add_column_applied PASSED [100%]
+
+============================= 25 passed in 0.44s ==============================
