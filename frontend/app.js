@@ -3,7 +3,7 @@
    Talks to FastAPI backend · handles all UI state
    ============================================================ */
 
-const API = 'http://localhost:8000';
+const API = window.location.origin;
 let _incidents = [
   {
     id: "inc-001-applied",
@@ -158,9 +158,14 @@ function showPage(name) {
    API HELPERS
 ══════════════════════════════════════════ */
 async function apiFetch(path, opts = {}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
+    ...(opts.headers || {}),
+  };
   const res = await fetch(API + path, {
-    headers: { 'Content-Type': 'application/json' },
     ...opts,
+    headers,
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }));
