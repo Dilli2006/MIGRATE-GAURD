@@ -10,6 +10,12 @@
 > **"When a production database migration crashes halfway through, MIGRATE-GUARD mathematically proves what actually happened, redacts sensitive data, narrates the incident in plain English, and executes the migration tool's native recovery command with one click."**
 
 <p align="center">
+  <img src="./assets/demo_dashboard.gif" alt="MIGRATE-GUARD Interactive Triage Dashboard Demo Walkthrough" width="92%" />
+</p>
+
+<p align="center"><em>Live MIGRATE-GUARD Triage Command Center — Real-time incident feed, forensic verdict analysis, schema delta diffs, and one-click native resolution</em></p>
+
+<p align="center">
   <img src="./assets/01_swagger_ui.png" alt="MIGRATE-GUARD Live Swagger UI — All API Endpoints" width="80%" />
 </p>
 
@@ -51,6 +57,13 @@
 - [System Architecture](#system-architecture)
   - [Component Architecture Diagram](#component-architecture-diagram)
   - [Project File Structure](#project-file-structure)
+- [Interactive Triage Dashboard](#interactive-triage-dashboard)
+  - [Demo Walkthrough Video](#demo-walkthrough-video)
+  - [1. Dashboard Overview & Incident Feed](#1-dashboard-overview--incident-feed)
+  - [2. Forensic Evidence & Verdict Modal](#2-forensic-evidence--verdict-modal)
+  - [3. Manual Incident Trigger & CI/CD Form](#3-manual-incident-trigger--cicd-form)
+  - [4. Simulation Scenario Playground](#4-simulation-scenario-playground)
+  - [5. System Configuration & Rules Matrix](#5-system-configuration--rules-matrix)
 - [Quick Start (Local Sandbox)](#quick-start-local-sandbox)
 - [Interactive Scenarios & Playground](#interactive-scenarios--playground)
   - [Scenario Breakdown](#scenario-breakdown)
@@ -465,15 +478,107 @@ MIGRATE-GUARD/
 │   ├── test_delta_engine.py        # Validates table, column, index, constraint math
 │   ├── test_verdict_engine.py      # Verifies APPLIED, ROLLED_BACK, and HARD_STOP branches
 │   └── fixtures/                   # Realistic crash migration SQL scripts
-├── assets/                         # Real project screenshots & evidence
+├── assets/                         # Real project screenshots, videos & evidence
 │   ├── 01_swagger_ui.png           # Swagger UI overview (all endpoint groups)
 │   ├── 02_swagger_endpoints.png    # Webhook & incident endpoint close-up
 │   ├── 02_post_incidents_response.json  # Real POST /incidents/ triage response
 │   ├── 03_swagger_all_endpoints.png     # Full API surface (approvals, notifications, schemas)
-│   └── 04_pytest_output.txt        # Real pytest run — 25/25 passed
+│   ├── 04_pytest_output.txt        # Real pytest run — 25/25 passed
+│   ├── 05_dashboard_overview.png   # Main incident feed & KPI metrics
+│   ├── 06_incident_detail_modal.png# Forensic evidence & delta diff modal
+│   ├── 07_new_incident_form.png    # Manual incident trigger form
+│   ├── 08_simulation_playground.png# Interactive Scenarios A, B, C
+│   ├── 09_settings_rules.png       # Verifiability rules & engine config
+│   ├── demo_dashboard.gif          # Animated walkthrough demo GIF
+│   ├── demo_dashboard.mp4          # High-definition video walkthrough
+│   └── demo_dashboard.webp         # Compressed animated WebP demo
 └── docker/
     └── docker-compose.yml          # PostgreSQL sandbox for live testing & demos
 ```
+
+---
+
+## Interactive Triage Dashboard
+
+MIGRATE-GUARD includes a visual dark-mode **Forensic Triage Command Center** served directly by FastAPI. It provides site reliability engineers, platform teams, and DBAs with real-time incident tracking, side-by-side mathematical schema deltas ($\Delta = S_1 - S_0$), AST action classification inspection, and human-in-the-loop one-click native resolution.
+
+### Demo Walkthrough Video
+
+<p align="center">
+  <video src="./assets/demo_dashboard.mp4" controls autoplay loop muted width="90%"></video>
+</p>
+
+<p align="center">
+  <img src="./assets/demo_dashboard.gif" alt="MIGRATE-GUARD Interactive Triage Dashboard Animated Walkthrough" width="90%" />
+</p>
+
+<p align="center"><em>Live walkthrough of the MIGRATE-GUARD Dashboard: incident feed navigation, forensic deep-dive modal, AST classification, schema delta inspection, and automated one-click resolution.</em></p>
+
+---
+
+### 1. Dashboard Overview & Incident Feed
+The command center's home view displays high-level forensic KPI metrics alongside the real-time incident stream with live status filtering (`All`, `Awaiting Approval`, `Resolved`, `Escalated`).
+
+<p align="center">
+  <img src="./assets/05_dashboard_overview.png" alt="MIGRATE-GUARD — Dashboard Overview & Incident Feed" width="90%" />
+</p>
+
+- **Real-Time KPI Metric Cards**: Immediate visibility into Total Incidents, Awaiting Approvals, Resolved Migrations, and Critical Hard Stops.
+- **Incident Stream**: Interactive feed listing failed migrations, execution timestamps, fine-grained action counts, diagnosis confidence, and color-coded status badges.
+- **Engine Status**: Live health ping indicator showing real-time connectivity to the forensic backend.
+
+---
+
+### 2. Forensic Evidence & Verdict Modal
+Clicking on any incident reveals the comprehensive forensic diagnosis, mathematical evidence, and exact resolution commands.
+
+<p align="center">
+  <img src="./assets/06_incident_detail_modal.png" alt="MIGRATE-GUARD — Forensic Evidence & Verdict Detail Modal" width="90%" />
+</p>
+
+- **Diagnostic Hero Banner**: Displays the definitive mathematical verdict (`APPLIED`, `ROLLED_BACK`, or `HARD_STOP`) with confidence percentage and detailed forensic justification.
+- **Schema Delta ($\Delta = S_1 - S_0$) Grid**: Visual side-by-side diff highlighting all tables, columns, and indexes mathematically verified in the live catalog versus removed structures.
+- **AST Statement Classifier Table**: Granular breakdown of each DDL statement in the migration script, its affected table, and its verifiability rating under information schema introspection rules.
+- **One-Click Native CLI Resolution**: Automatically constructs the exact native command for the migration tool (e.g., `prisma migrate resolve --applied "<migration_name>"`), ready to copy or execute.
+- **Human-in-the-Loop Governance**: Action buttons to **Approve & Resolve**, **Reject**, or **Escalate to Senior DBA**.
+
+---
+
+### 3. Manual Incident Trigger & CI/CD Form
+Provides on-demand analysis for manual migration testing or integrations where webhooks are not directly accessible.
+
+<p align="center">
+  <img src="./assets/07_new_incident_form.png" alt="MIGRATE-GUARD — Manual Incident Trigger & CI/CD Form" width="90%" />
+</p>
+
+- **Migration SQL Input**: Code editor for pasting raw migration scripts containing complex multi-statement DDL.
+- **Raw CI/CD Logs**: Error input that is automatically sanitized through the redaction engine to strip database passwords, connection strings, and tokens before storage.
+- **Instant Triage Execution**: Triggers the entire AST parsing, introspection, delta computation, and narrative pipeline with a single click.
+
+---
+
+### 4. Simulation Scenario Playground
+An interactive sandbox pre-configured with canonical production crash scenarios to demonstrate the deterministic decision boundaries without requiring a live failing database.
+
+<p align="center">
+  <img src="./assets/08_simulation_playground.png" alt="MIGRATE-GUARD — Simulation Scenario Playground" width="90%" />
+</p>
+
+- **Scenario A (Fully Applied)**: DDL committed to PostgreSQL before a post-migration health-check timeout $\rightarrow$ mathematically proven as `APPLIED` with 100% confidence.
+- **Scenario B (Rolled Back)**: PostgreSQL aborted the transaction due to disk quota limits $\rightarrow$ delta is empty ($\Delta = \emptyset$), proven as `ROLLED_BACK`.
+- **Scenario C (Hard Stop)**: Migration contains non-verifiable statements (such as `ALTER COLUMN TYPE` or raw DML data migrations) $\rightarrow$ triggers a safety `HARD_STOP` requiring human DBA review.
+
+---
+
+### 5. System Configuration & Rules Matrix
+Inspects active runtime parameters and the canonical DDL Verifiability Rules Matrix enforced by the classifier engine.
+
+<p align="center">
+  <img src="./assets/09_settings_rules.png" alt="MIGRATE-GUARD — System Configuration & Verifiability Matrix" width="90%" />
+</p>
+
+- **Runtime Diagnostics**: Displays API base endpoint, backend health status, default migration adapter (`prisma`), and polling intervals.
+- **Verifiability Rules Matrix**: Reference catalog detailing each SQL action type (`CREATE_TABLE`, `ADD_COLUMN`, `CREATE_INDEX`, `ALTER_COLUMN_TYPE`, `RAW_DML`), its deterministic verification capability, and architectural rationale.
 
 ---
 

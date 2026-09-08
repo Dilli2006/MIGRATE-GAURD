@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIGRATE-GUARD — Triage Dashboard</title>
+  <meta name="description" content="Post-failure resolution engine for database migrations. View incidents, approve verdicts, and resolve migration failures with one click." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ═══ App Shell ═══ -->
+<div class="app-shell">
+
+  <!-- ═══ Sidebar ═══ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">🛡️</div>
+      <div>
+        <div class="logo-text">MIGRATE-GUARD</div>
+        <div class="logo-sub">Post-Failure Resolution Engine</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Monitor</div>
+      <div class="nav-item active" id="nav-dashboard" onclick="showPage('dashboard')">
+        <span class="nav-icon">📊</span> Dashboard
+        <span class="nav-badge" id="awaitingBadge" style="display:none">0</span>
+      </div>
+
+      <div class="nav-section-label">Actions</div>
+      <div class="nav-item" id="nav-create" onclick="showPage('create')">
+        <span class="nav-icon">➕</span> New Incident
+      </div>
+      <div class="nav-item" id="nav-simulate" onclick="showPage('simulate')">
+        <span class="nav-icon">🧪</span> Simulate Scenario
+      </div>
+
+      <div class="nav-section-label">System</div>
+      <div class="nav-item" id="nav-settings" onclick="showPage('settings')">
+        <span class="nav-icon">⚙️</span> Settings
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="api-status">
+        <div class="status-dot" id="apiDot"></div>
+        <span id="apiStatusText">Connecting…</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ Main Content ═══ -->
+  <div class="main-content">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+      <div class="topbar-title" id="pageTitle"><span>Dashboard</span> — Incident Feed</div>
+      <div class="topbar-actions">
+        <div class="refresh-indicator">
+          <span class="spinner" id="refreshSpinner" style="display:none"></span>
+          <span id="lastRefresh">—</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="loadIncidents()">↻ Refresh</button>
+        <button class="btn btn-primary btn-sm" onclick="showPage('create')">+ New Incident</button>
+      </div>
+    </header>
+
+    <!-- ════ PAGE: Dashboard ════ -->
+    <div class="page active" id="page-dashboard">
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card cyan">
+          <span class="stat-icon">🗂️</span>
+          <div class="stat-value" id="statTotal">0</div>
+          <div class="stat-label">Total Incidents</div>
+        </div>
+        <div class="stat-card amber">
+          <span class="stat-icon">⏳</span>
+          <div class="stat-value" id="statAwaiting">0</div>
+          <div class="stat-label">Awaiting Approval</div>
+        </div>
+        <div class="stat-card green">
+          <span class="stat-icon">✅</span>
+          <div class="stat-value" id="statResolved">0</div>
+          <div class="stat-label">Resolved</div>
+        </div>
+        <div class="stat-card red">
+          <span class="stat-icon">🛑</span>
+          <div class="stat-value" id="statHardStop">0</div>
+          <div class="stat-label">Hard Stops</div>
+        </div>
+      </div>
+
+      <!-- Incident Table -->
+      <div class="glass-card">
+        <div class="card-header">
+          <div class="card-title">⚡ Live Incident Feed</div>
+          <div class="filter-bar" id="filterBar">
+            <div class="filter-chip active" onclick="setFilter('ALL', this)">All</div>
+            <div class="filter-chip" onclick="setFilter('AWAITING_APPROVAL', this)">Awaiting</div>
+            <div class="filter-chip" onclick="setFilter('RESOLVED', this)">Resolved</div>
+            <div class="filter-chip" onclick="setFilter('FAILED', this)">Escalated</div>
+          </div>
+        </div>
+        <div id="incidentTableContainer">
+          <div class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <p>Loading incidents…</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: Create Incident ════ -->
+    <div class="page" id="page-create">
+      <div class="glass-card" style="max-width:700px">
+        <div class="card-header">
+          <div class="card-title">➕ Manually Trigger Incident</div>
+        </div>
+        <div style="padding:24px">
+          <form class="form-section" id="createForm" onsubmit="handleCreateSubmit(event)">
+            <div class="form-group">
+              <label class="form-label">Migration Name</label>
+              <input class="form-input" id="f-name" type="text"
+                placeholder="e.g. 20260908_add_teams_table" required />
+              <span class="form-hint">The exact migration name from your Prisma/Flyway history.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Migration SQL</label>
+              <textarea class="form-textarea" id="f-sql" rows="7"
+                placeholder="CREATE TABLE teams (&#10;  id SERIAL PRIMARY KEY,&#10;  name TEXT NOT NULL&#10;);&#10;ALTER TABLE users ADD COLUMN team_id INT;" required></textarea>
+              <span class="form-hint">Paste the full contents of your migration .sql file.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Raw Error Logs <span class="optional">(optional)</span></label>
+              <textarea class="form-textarea" id="f-logs" rows="4"
+                placeholder="Prisma P3009 error output, CI/CD logs…"></textarea>
+              <span class="form-hint">CI/CD output will be redacted before storage.</span>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Prisma Migrations Dir <span class="optional">(optional)</span></label>
+              <input class="form-input" id="f-dir" type="text" value="./prisma/migrations" />
+            </div>
+
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button type="submit" class="btn btn-primary btn-lg" id="createSubmitBtn">
+                🔬 Run Forensic Analysis
+              </button>
+              <button type="button" class="btn btn-ghost" onclick="clearCreateForm()">Clear</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: Simulate ════ -->
+    <div class="page" id="page-simulate">
+      <p style="font-size:13px;color:var(--slate-500);margin-bottom:20px">
+        Click a scenario to pre-fill the incident form with realistic SQL — no live database required.
+      </p>
+      <div class="scenario-grid">
+        <div class="scenario-card sc-a" onclick="loadScenario('A')">
+          <div class="scenario-emoji">✅</div>
+          <div class="scenario-title">Scenario A — Fully Applied</div>
+          <div class="scenario-desc">CREATE TABLE + ADD COLUMN + CREATE INDEX all committed before a post-migration health-check timeout.</div>
+          <div class="scenario-verdict"><span class="badge badge-applied">✅ APPLIED</span></div>
+        </div>
+        <div class="scenario-card sc-b" onclick="loadScenario('B')">
+          <div class="scenario-emoji">🔄</div>
+          <div class="scenario-title">Scenario B — Rolled Back</div>
+          <div class="scenario-desc">Full transaction aborted by PostgreSQL due to disk quota. Schema delta is empty (Δ = ∅).</div>
+          <div class="scenario-verdict"><span class="badge badge-rolled-back">🔄 ROLLED_BACK</span></div>
+        </div>
+        <div class="scenario-card sc-c" onclick="loadScenario('C')">
+          <div class="scenario-emoji">🛑</div>
+          <div class="scenario-title">Scenario C — Hard Stop</div>
+          <div class="scenario-desc">ALTER COLUMN TYPE + raw UPDATE DML. Non-verifiable actions trigger mandatory human DBA review.</div>
+          <div class="scenario-verdict"><span class="badge badge-hard-stop">🛑 HARD_STOP</span></div>
+        </div>
+      </div>
+
+      <div class="glass-card" style="margin-top:0">
+        <div class="card-header">
+          <div class="card-title">🧪 Scenario Preview</div>
+          <span id="scenarioLabel" style="font-size:12px;color:var(--slate-500)">Select a scenario above</span>
+        </div>
+        <div style="padding:20px;display:flex;flex-direction:column;gap:14px" id="scenarioPreview">
+          <div class="empty-state" style="padding:30px 20px">
+            <div class="empty-icon">👆</div>
+            <p>Pick a scenario to preview its SQL and submit it</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ PAGE: Settings ════ -->
+    <div class="page" id="page-settings">
+      <div style="display:flex;flex-direction:column;gap:24px;max-width:900px">
+
+        <div class="glass-card">
+          <div class="card-header">
+            <div class="card-title">⚙️ Runtime Configuration</div>
+          </div>
+          <div style="padding:20px">
+            <div class="settings-grid" id="settingsGrid">
+              <div class="settings-item">
+                <div class="settings-key">API Base URL</div>
+                <div class="settings-value" id="cfg-base">—</div>
+              </div>
+              <div class="settings-item">
+                <div class="settings-key">Backend Status</div>
+                <div class="settings-value" id="cfg-status">—</div>
+              </div>
+              <div class="settings-item">
+                <div class="settings-key">Default Adapter</div>
+                <div class="settings-value">prisma</div>
+              </div>
+              <div class="settings-item">
+                <div class="settings-key">Poll Interval</div>
+                <div class="settings-value">15 seconds</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card">
+          <div class="card-header">
+            <div class="card-title">📋 Verifiability Rules Matrix</div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="rules-table">
+              <thead><tr><th>Action Type</th><th>SQL Pattern</th><th>Verifiable</th><th>Rationale</th></tr></thead>
+              <tbody id="rulesTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+</div><!-- /app-shell -->
+
+<!-- ═══ Incident Detail Modal ═══ -->
+<div class="modal-overlay" id="incidentModal" onclick="closeModal(event)">
+  <div class="modal-panel" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modalTitle">Incident Detail</div>
+        <div class="modal-subtitle" id="modalSubtitle"></div>
+      </div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+
+    <div class="modal-body" id="modalBody">
+      <!-- Populated by JS -->
+    </div>
+
+    <div class="modal-footer" id="modalFooter">
+      <!-- Action buttons populated by JS -->
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
