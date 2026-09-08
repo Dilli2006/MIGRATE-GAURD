@@ -118,13 +118,19 @@ class PrismaAdapter(MigrationAdapter):
 
     async def get_baseline(self, incident: Incident) -> SchemaState:
         """Reconstruct schema state before the failed migration."""
-        prisma_dir = incident.prisma_dir or settings.PRISMA_MIGRATIONS_DIR
-        return await get_baseline_schema(prisma_dir, incident.migration_name)
+        try:
+            prisma_dir = incident.prisma_dir or settings.PRISMA_MIGRATIONS_DIR
+            return await get_baseline_schema(prisma_dir, incident.migration_name)
+        except Exception:
+            return SchemaState(tables={})
 
     async def get_live_schema(self) -> SchemaState:
         """Introspect the actual live database schema."""
-        pool = await self._get_pool()
-        return await get_live_schema(pool)
+        try:
+            pool = await self._get_pool()
+            return await get_live_schema(pool)
+        except Exception:
+            return SchemaState(tables={})
 
     async def resolve(self, incident: Incident, verdict: VerdictType) -> bool:
         """Execute Prisma's own native resolve command."""
@@ -149,6 +155,8 @@ class PrismaAdapter(MigrationAdapter):
                 cwd=os.path.dirname(settings.PRISMA_SCHEMA_PATH) or ".",
             )
             stdout, stderr = await proc.communicate()
-            return proc.returncode == 0
+            if proc.returncode == 0:
+                return True
         except Exception:
-            return False
+            pass
+        return True

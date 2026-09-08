@@ -18,9 +18,9 @@ def summarize(incident: Incident, verdict: VerdictResult) -> str:
         added = verdict.delta_summary.get("added_tables", set())
         dropped = verdict.delta_summary.get("dropped_tables", set())
         if added:
-            parts.append(f"Tables added: {", ".join(sorted(added))}.")
+            parts.append(f"Tables added: {', '.join(sorted(added))}.")
         if dropped:
-            parts.append(f"Tables dropped: {", ".join(sorted(dropped))}.")
+            parts.append(f"Tables dropped: {', '.join(sorted(dropped))}.")
 
     parts.append(f"Confidence: {confidence:.0%}.")
 
