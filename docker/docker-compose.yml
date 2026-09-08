@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: migrateguard
+      POSTGRES_PASSWORD: migrateguard
+      POSTGRES_DB: migrateguard
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U migrateguard"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/docker/Dockerfile.backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://migrateguard:migrateguard@db:5432/migrateguard
+      DATABASE_URL_RAW: postgresql://migrateguard:migrateguard@db:5432/
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+
